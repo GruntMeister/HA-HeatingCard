@@ -1,0 +1,7 @@
+{
+  "name": "Heating Flow Card",
+  "render_readme": true,
+  "filename": "heating-flow-card.js",
+  "homeassistant": "2023.1.0",
+  "hacs": "1.6.0"
+}
