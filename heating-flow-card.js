@@ -32,13 +32,6 @@
     '@media (prefers-reduced-motion: reduce) { .hfc-flow { animation: none; } }'
   ].join('\n');
 
-  if (!document.getElementById('hfc-style')) {
-    const st = document.createElement('style');
-    st.id = 'hfc-style';
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
-
   function num(hass, id) {
     if (!id || !hass || !hass.states || !hass.states[id]) return null;
     const v = parseFloat(hass.states[id].state);
@@ -325,7 +318,9 @@
         : '';
 
       this._height = H;
-      this.innerHTML = '<svg class="hfc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img">' + title + out + '</svg>';
+      // CSS is embedded inside the SVG because HA renders cards inside a
+      // shadow root, where document-level styles do not apply.
+      this.innerHTML = '<svg class="hfc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img"><style>' + CSS + '</style>' + title + out + '</svg>';
     }
   }
 

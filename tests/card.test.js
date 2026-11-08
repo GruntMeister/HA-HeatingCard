@@ -116,6 +116,16 @@ test('render: no line intersects any text (lines stop at box edges)', () => {
   assert.deepEqual(findLineTextOverlaps(el.innerHTML), []);
 });
 
+test('render: CSS is embedded inside the SVG (shadow-DOM safe)', () => {
+  const el = renderCard(Card, EXAMPLE_CONFIG, EXAMPLE_STATES);
+  const svgStart = el.innerHTML.indexOf('<svg');
+  const svgEnd = el.innerHTML.indexOf('</svg>');
+  const svg = el.innerHTML.slice(svgStart, svgEnd);
+  assert.match(svg, /<style>/);
+  assert.match(svg, /\.hfc-box/);
+  assert.match(svg, /\.hfc-name/);
+});
+
 test('render: unchanged states do not re-render', () => {
   const el = renderCard(Card, EXAMPLE_CONFIG, EXAMPLE_STATES);
   const first = el.innerHTML;
