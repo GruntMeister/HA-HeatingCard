@@ -16,7 +16,7 @@ Supported participant types:
 | `generator` | Heat generator (heat pump, boiler, CHP …) | away from participant (`from`) |
 | `solar` | Solar thermal | away from participant (`from`) |
 | `emitter` | Heat consumers (heating circuit, DHW …) | towards participant (`to`) |
-| `storage` | Layered buffer tank with multiple temperature layers | charging = `to`, discharging = `from` (from temperature comparison) |
+| `storage` | Layered tank with multiple temperature layers | charging = `to`, discharging = `from` (from temperature comparison) |
 
 ![Heating Flow Card](screenshot.png)
 
@@ -59,16 +59,16 @@ participants:
     pump: binary_sensor.solar_pump
     pump_direction: from
 
-  - id: buffer
+  - id: tank
     type: storage
-    name: Buffer tank
+    name: Tank
     layers:
       - name: Top
-        temp: sensor.buffer_top
+        temp: sensor.tank_top
       - name: Middle
-        temp: sensor.buffer_middle
+        temp: sensor.tank_middle
       - name: Bottom
-        temp: sensor.buffer_bottom
+        temp: sensor.tank_bottom
 
   - id: heating_circuit_1
     type: emitter

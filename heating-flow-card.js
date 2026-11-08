@@ -235,7 +235,7 @@
         title: 'Heating',
         participants: [
           { id: 'generator', type: 'generator', name: 'Heat generator', sensors: { flow_temp: 'sensor.supply', return_temp: 'sensor.return' } },
-          { id: 'buffer', type: 'storage', name: 'Buffer tank', layers: [{ name: 'Top', temp: 'sensor.buffer_top' }, { name: 'Bottom', temp: 'sensor.buffer_bottom' }] },
+          { id: 'tank', type: 'storage', name: 'Tank', layers: [{ name: 'Top', temp: 'sensor.tank_top' }, { name: 'Bottom', temp: 'sensor.tank_bottom' }] },
           { id: 'heating', type: 'emitter', name: 'Heating circuit', sensors: { flow_temp: 'sensor.hc_supply', return_temp: 'sensor.hc_return' } }
         ]
       };
@@ -286,9 +286,11 @@
       let out = '';
 
       const yTop = rowY(0) + BOX_H / 2;
-      const yBot = rowY(rows - 1) + BOX_H / 2;
-      if (yBot > yTop) {
-        out += '<line class="hfc-bus" x1="' + BUS_X + '" y1="' + yTop + '" x2="' + BUS_X + '" y2="' + yBot + '"/>';
+      const ySideBot = rowY(sideRows - 1) + BOX_H / 2;
+      const sby = hasStorage ? rowY(sideRows) : null;
+      const yBusEnd = hasStorage ? sby : ySideBot;
+      if (yBusEnd > yTop) {
+        out += '<line class="hfc-bus" x1="' + BUS_X + '" y1="' + yTop + '" x2="' + BUS_X + '" y2="' + yBusEnd + '"/>';
       }
 
       sources.forEach((x, i) => {
@@ -305,14 +307,12 @@
 
       if (hasStorage) {
         const sx = storages[0];
-        const sby = rowY(sideRows);
         const storW = 150;
         const sbx = BUS_X - storW / 2;
         out += storageBox(sx, sbx, sby, storW, BOX_H, minT, maxT);
         const sf = sx.flow;
-        if (sf.active && sf.dir && yBot > yTop) {
-          out += conn(BUS_X, yTop, BUS_X, sby, sf, 'to');
-          out += conn(BUS_X, sby + BOX_H, BUS_X, yBot, sf, 'to');
+        if (sf.active && sf.dir && sby > ySideBot) {
+          out += conn(BUS_X, ySideBot, BUS_X, sby, sf, 'to');
         }
       }
 
