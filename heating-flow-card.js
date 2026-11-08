@@ -18,13 +18,13 @@
 
   const CSS = [
     '.hfc-svg { width: 100%; height: auto; display: block; font-family: var(--paper-font-body1_-_font-family, Roboto, sans-serif); }',
-    '.hfc-box { fill: var(--card-background-color, var(--ha-card-background, #1e1e1e)); stroke: var(--divider-color, #3a3a3a); stroke-width: 1; }',
-    '.hfc-title { fill: var(--primary-text-color, #ffffff); font-size: 14px; font-weight: 600; }',
-    '.hfc-name { fill: var(--primary-text-color, #ffffff); font-size: 12px; font-weight: 600; }',
-    '.hfc-sub { fill: var(--secondary-text-color, #9e9e9e); font-size: 11px; }',
-    '.hfc-bus { stroke: var(--divider-color, #3a3a3a); stroke-width: 3; stroke-linecap: round; }',
+    '.hfc-box { fill: #1e1e1e; stroke: #424242; stroke-width: 1; }',
+    '.hfc-title { fill: #ffffff; font-size: 14px; font-weight: 600; }',
+    '.hfc-name { fill: #ffffff; font-size: 12px; font-weight: 600; }',
+    '.hfc-sub { fill: #9e9e9e; font-size: 11px; }',
+    '.hfc-bus { stroke: #757575; stroke-width: 3; stroke-linecap: round; }',
     '.hfc-line { fill: none; stroke-linecap: round; }',
-    '.hfc-line-off { stroke: var(--divider-color, #3a3a3a); stroke-width: 2; opacity: 0.5; }',
+    '.hfc-line-off { stroke: #757575; stroke-width: 2; opacity: 0.5; }',
     '.hfc-flow { stroke-dasharray: 7 7; animation: hfc-dash 0.9s linear infinite; }',
     '.hfc-fwd { animation-direction: normal; }',
     '.hfc-rev { animation-direction: reverse; }',
@@ -177,7 +177,7 @@
         segs += '<rect x="' + tankX + '" y="' + ly.toFixed(1) + '" width="' + tankW + '" height="' + Math.max(1, lh - 1).toFixed(1) + '" fill="' + tempColor(layers[i].temp, minT, maxT) + '"/>';
       }
     }
-    segs += '<rect x="' + tankX + '" y="' + tankY + '" width="' + tankW + '" height="' + tankH + '" rx="5" fill="none" stroke="var(--primary-text-color, #ffffff)" stroke-width="1.2" opacity="0.7"/>';
+    segs += '<rect x="' + tankX + '" y="' + tankY + '" width="' + tankW + '" height="' + tankH + '" rx="5" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.7"/>';
     let labels = '<text class="hfc-name" x="' + (bx + 64) + '" y="' + (by + 22) + '">' + esc(String(p.name || 'Storage').slice(0, 16)) + '</text>';
     const lh2 = Math.min(14, (BOX_H - 30) / Math.max(1, layers.length));
     for (i = 0; i < layers.length; i++) {
