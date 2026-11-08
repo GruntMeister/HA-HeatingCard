@@ -288,18 +288,18 @@
       const yTop = rowY(0) + BOX_H / 2;
       const ySideBot = rowY(sideRows - 1) + BOX_H / 2;
       const sby = hasStorage ? rowY(sideRows) : null;
-      const yBusEnd = hasStorage ? sby : ySideBot;
+      const yBusEnd = hasStorage ? sby - 5 : ySideBot;
       if (yBusEnd > yTop) {
         out += '<line class="hfc-bus" x1="' + BUS_X + '" y1="' + yTop + '" x2="' + BUS_X + '" y2="' + yBusEnd + '"/>';
       }
 
       sources.forEach((x, i) => {
         const cy = rowY(i) + BOX_H / 2;
-        out += conn(MARGIN + BOX_W, cy, BUS_X, cy, x.flow, 'from');
+        out += conn(MARGIN + BOX_W + 5, cy, BUS_X, cy, x.flow, 'from');
       });
       emitters.forEach((x, i) => {
         const cy = rowY(i) + BOX_H / 2;
-        out += conn(BUS_X, cy, W - MARGIN - BOX_W, cy, x.flow, 'to');
+        out += conn(BUS_X, cy, W - MARGIN - BOX_W - 5, cy, x.flow, 'to');
       });
 
       sources.forEach((x, i) => { out += participantBox(x, MARGIN, rowY(i), BOX_W, BOX_H); });
@@ -311,8 +311,8 @@
         const sbx = BUS_X - storW / 2;
         out += storageBox(sx, sbx, sby, storW, BOX_H, minT, maxT);
         const sf = sx.flow;
-        if (sf.active && sf.dir && sby > ySideBot) {
-          out += conn(BUS_X, ySideBot, BUS_X, sby, sf, 'to');
+        if (sf.active && sf.dir && sby - 5 > ySideBot) {
+          out += conn(BUS_X, ySideBot, BUS_X, sby - 5, sf, 'to');
         }
       }
 
