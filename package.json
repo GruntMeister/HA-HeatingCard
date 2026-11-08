@@ -1,0 +1,9 @@
+{
+  "name": "ha-heating-card",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Heating Flow Card for Home Assistant (HACS). Dev-only package.json for running local tests.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

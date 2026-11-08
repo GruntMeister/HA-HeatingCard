@@ -226,6 +226,10 @@
       this._render();
     }
 
+    static getConfigElement() {
+      return document.createElement('heating-flow-card-editor');
+    }
+
     getCardSize() {
       return Math.max(3, Math.ceil(this._height / 50));
     }
@@ -325,8 +329,72 @@
     }
   }
 
+  class HeatingFlowCardEditor extends HTMLElement {
+    constructor() {
+      super();
+      this._config = {};
+      this.addEventListener('input', () => this._onInput());
+    }
+
+    setConfig(config) {
+      this._config = JSON.parse(JSON.stringify(config || {}));
+      this._renderEditor();
+    }
+
+    setProperty(config) {
+      this.setConfig(config);
+    }
+
+    set hass(_hass) {}
+
+    _renderEditor() {
+      const c = this._config;
+      this.innerHTML =
+        '<div style="margin-bottom:8px"><label style="display:block;font-size:12px">Title</label>' +
+        '<input id="hfc-ed-title" style="width:100%" value="' + esc(c.title || '') + '"></div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:8px">' +
+        '<div style="flex:1"><label style="display:block;font-size:12px">min_temp</label>' +
+        '<input id="hfc-ed-min" type="number" style="width:100%" value="' + (c.min_temp != null ? c.min_temp : 5) + '"></div>' +
+        '<div style="flex:1"><label style="display:block;font-size:12px">max_temp</label>' +
+        '<input id="hfc-ed-max" type="number" style="width:100%" value="' + (c.max_temp != null ? c.max_temp : 80) + '"></div></div>' +
+        '<label style="display:block;font-size:12px">participants (JSON)</label>' +
+        '<textarea id="hfc-ed-parts" rows="14" style="width:100%;font-family:monospace">' +
+        esc(JSON.stringify(c.participants || [], null, 2)) + '</textarea>' +
+        '<div id="hfc-ed-err" style="color:#ff5252;font-size:12px;margin-top:4px"></div>';
+    }
+
+    _buildConfig(title, min, max, participantsJson) {
+      const participants = JSON.parse(participantsJson);
+      const config = { type: CARD_TYPE, participants };
+      if (title) config.title = title;
+      if (Number.isFinite(min)) config.min_temp = min;
+      if (Number.isFinite(max)) config.max_temp = max;
+      return config;
+    }
+
+    _onInput() {
+      const err = this.querySelector('#hfc-ed-err');
+      try {
+        const config = this._buildConfig(
+          this.querySelector('#hfc-ed-title').value,
+          parseFloat(this.querySelector('#hfc-ed-min').value),
+          parseFloat(this.querySelector('#hfc-ed-max').value),
+          this.querySelector('#hfc-ed-parts').value
+        );
+        this._config = config;
+        if (err) err.textContent = '';
+        this.dispatchEvent(new CustomEvent('config-changed', { detail: { config }, bubbles: true, composed: true }));
+      } catch (e) {
+        if (err) err.textContent = String((e && e.message) || e);
+      }
+    }
+  }
+
   if (!customElements.get(CARD_TYPE)) {
     customElements.define(CARD_TYPE, HeatingFlowCard);
+  }
+  if (!customElements.get('heating-flow-card-editor')) {
+    customElements.define('heating-flow-card-editor', HeatingFlowCardEditor);
   }
 
   window.customCards = window.customCards || [];

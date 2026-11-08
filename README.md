@@ -33,6 +33,13 @@ Manual installation: copy `heating-flow-card.js` to
 
 ## Configuration
 
+The card has a **UI configurator**: in the dashboard editor, edit the card
+visually – fields for `title`, `min_temp`, `max_temp` and a JSON textarea for
+`participants` (JSON is valid YAML). Invalid JSON is shown as an error and not
+applied.
+
+Raw YAML:
+
 ```yaml
 type: custom:heating-flow-card
 title: Heating system
@@ -113,3 +120,18 @@ participants:
   of the generators/solar. Bus warmer → charging (flow into the tank), storage warmer → discharging.
 
 The width of the animated flow lines scales with power (kW) or temperature difference.
+
+## Development / Tests
+
+Local tests run with the built-in Node test runner (no dependencies):
+
+```bash
+npm test          # or: node --test
+```
+
+Covered: config validation, flow logic (pump signal, temperature-difference
+threshold, tank charge/discharge), rendering (box/flow counts, direction
+classes, no line/text overlaps, re-render skipping) and a render test that
+regenerates `screenshot.png` from the example configuration
+(`tests/screenshot.test.js`; the PNG step needs
+`pip install svglib reportlab pypdfium2 pillow` and is skipped otherwise).
