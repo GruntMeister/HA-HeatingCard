@@ -18,7 +18,7 @@
 
   const CSS = [
     '.hfc-svg { width: 100%; height: auto; display: block; font-family: var(--paper-font-body1_-_font-family, Roboto, sans-serif); }',
-    '.hfc-box { fill: var(--card-background-color, #1e1e1e); stroke: var(--divider-color, #3a3a3a); stroke-width: 1; }',
+    '.hfc-box { fill: var(--card-background-color, var(--ha-card-background, #1e1e1e)); stroke: var(--divider-color, #3a3a3a); stroke-width: 1; }',
     '.hfc-title { fill: var(--primary-text-color, #ffffff); font-size: 14px; font-weight: 600; }',
     '.hfc-name { fill: var(--primary-text-color, #ffffff); font-size: 12px; font-weight: 600; }',
     '.hfc-sub { fill: var(--secondary-text-color, #9e9e9e); font-size: 11px; }',
