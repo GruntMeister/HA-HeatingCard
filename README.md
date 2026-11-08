@@ -1,115 +1,115 @@
 # Heating Flow Card
 
-Eine Lovelace-Card für Home Assistant zur Visualisierung von Heizungsanlagen –
-optisch angelehnt an power-flow-card-plus: aufgeräumte Boxen an einer zentralen
-Verbindungslinie, animierte Flüsse statt überladener Diagramme.
+A Lovelace card for Home Assistant that visualizes heating systems – inspired by
+power-flow-card-plus: clean boxes connected to a central bus line with animated
+flows instead of cluttered diagrams.
 
-Der Fluss eines Teilnehmers ergibt sich aus der **Temperaturdifferenz** von
-Vorlauf und Rücklauf (`flow_temp` – `return_temp`). Ist zusätzlich ein
-**Pumpen-Signal** (`pump`) konfiguriert, bestimmt dessen Zustand, ob überhaupt
-ein Fluss angezeigt wird, und über `pump_direction` die Richtung (zum Teilnehmer
-hin oder von ihm weg).
+The flow of a participant is derived from the **temperature difference** between
+supply and return (`flow_temp` – `return_temp`). If a **pump signal** (`pump`)
+is configured as well, its state decides whether a flow is shown at all, and
+`pump_direction` defines the direction (towards the participant or away from it).
+
+Supported participant types:
+
+| Type | Meaning | Default flow direction |
+|---|---|---|
+| `generator` | Heat generator (heat pump, boiler, CHP …) | away from participant (`from`) |
+| `solar` | Solar thermal | away from participant (`from`) |
+| `emitter` | Heat consumers (heating circuit, DHW …) | towards participant (`to`) |
+| `storage` | Layered buffer tank with multiple temperature layers | charging = `to`, discharging = `from` (from temperature comparison) |
 
 ![Heating Flow Card](screenshot.png)
 
-Unterstützte Teilnehmer-Typen:
+## Installation via HACS
 
-| Typ | Bedeutung | Standard-Flussrichtung |
-|---|---|---|
-| `generator` | Wärmeerzeuger (Wärmepumpe, Kessel, BHKW …) | vom Teilnehmer weg (`from`) |
-| `solar` | Solarthermie | vom Teilnehmer weg (`from`) |
-| `emitter` | Wärmeabgabe (Heizkreis, Warmwasser …) | zum Teilnehmer hin (`to`) |
-| `storage` | Schichtspeicher mit mehreren Temperatur-Schichten | laden = `to`, entladen = `from` (aus Temperaturvergleich) |
+1. Open HACS → **Frontend** (custom repositories) → top right **⋮ → Custom repository**
+2. Enter `GruntMeister/HA-HeatingCard`, category **Lovelace**
+3. Add it, then install **Heating Flow Card** in HACS and reload the frontend
+   resources (dashboard → top right **⋮ → Refresh resources** / clear browser cache)
 
-## Installation über HACS
+Manual installation: copy `heating-flow-card.js` to
+`config/www/community/HA-HeatingCard/` and add it as a resource of type
+**JavaScript module**.
 
-1. HACS öffnen → **Frontend** (Custom Repositories) → oben rechts **⋮ → Custom repository**
-2. Repository `GruntMeister/HA-HeatingCard` eintragen, Kategorie **Lovelace**
-3. Hinzufügen, danach **Heating Flow Card** in HACS installieren und Ressourcen im
-   Browser neu laden (Dashboard → oben rechts **⋮ → Ressourcen aktualisieren** bzw. Cache leeren)
-
-Manuelle Installation: `heating-flow-card.js` nach `config/www/community/HA-HeatingCard/`
-kopieren und als Ressource vom Typ **JavaScript-Modul** hinzufügen.
-
-## Konfiguration
+## Configuration
 
 ```yaml
 type: custom:heating-flow-card
-title: Heizungsanlage
-min_temp: 5        # Temperaturspanne für die Farbskala (optional, Default 5)
-max_temp: 80       # Default 80
+title: Heating system
+min_temp: 5        # temperature range for the color scale (optional, default 5)
+max_temp: 80       # default 80
 participants:
-  - id: waermepumpe
+  - id: heatpump
     type: generator
-    name: Wärmepumpe
+    name: Heat pump
     sensors:
-      flow_temp: sensor.wp_vorlauftemperatur
-      return_temp: sensor.wp_ruecklauftemperatur
-      power: sensor.wp_thermische_leistung   # optional, in kW
-    pump: binary_sensor.wp_verdichter       # optional
-    pump_direction: from                     # to | from, Default je nach Typ
+      flow_temp: sensor.hp_supply_temperature
+      return_temp: sensor.hp_return_temperature
+      power: sensor.hp_thermal_power          # optional, in kW
+    pump: binary_sensor.hp_compressor       # optional
+    pump_direction: from                    # to | from, defaults by type
 
   - id: solar
     type: solar
-    name: Solarthermie
+    name: Solar thermal
     sensors:
-      flow_temp: sensor.solar_vorlauf
-      return_temp: sensor.solar_ruecklauf
-      power: sensor.solar_leistung
-    pump: binary_sensor.solar_pumpe
+      flow_temp: sensor.solar_supply
+      return_temp: sensor.solar_return
+      power: sensor.solar_power
+    pump: binary_sensor.solar_pump
     pump_direction: from
 
-  - id: puffer
+  - id: buffer
     type: storage
-    name: Pufferspeicher
+    name: Buffer tank
     layers:
-      - name: Oben
-        temp: sensor.puffer_oben
-      - name: Mitte
-        temp: sensor.puffer_mitte
-      - name: Unten
-        temp: sensor.puffer_unten
+      - name: Top
+        temp: sensor.buffer_top
+      - name: Middle
+        temp: sensor.buffer_middle
+      - name: Bottom
+        temp: sensor.buffer_bottom
 
-  - id: heizkreis1
+  - id: heating_circuit_1
     type: emitter
-    name: Heizkreis 1
+    name: Heating circuit 1
     sensors:
-      flow_temp: sensor.hk1_vorlauf
-      return_temp: sensor.hk1_ruecklauf
-      power: sensor.hk1_leistung
-    pump: binary_sensor.hk1_pumpe
+      flow_temp: sensor.hc1_supply
+      return_temp: sensor.hc1_return
+      power: sensor.hc1_power
+    pump: binary_sensor.hc1_pump
     pump_direction: to
 ```
 
-### Optionen
+### Card options
 
-| Option | Typ | Beschreibung |
+| Option | Type | Description |
 |---|---|---|
-| `title` | string | Optionale Überschrift der Card |
-| `min_temp` / `max_temp` | number | Temperaturbereich der Farbskala (blau → rot) |
-| `participants` | Liste | Teilnehmer der Anlage (Pflicht) |
+| `title` | string | Optional card title |
+| `min_temp` / `max_temp` | number | Temperature range of the color scale (blue → red) |
+| `participants` | list | Participants of the system (required) |
 
-### Teilnehmer-Optionen
+### Participant options
 
-| Option | Beschreibung |
+| Option | Description |
 |---|---|
-| `id` | Eindeutige ID |
-| `type` | `generator`, `solar`, `emitter` oder `storage` |
-| `name` | Anzeigename |
-| `sensors.flow_temp` | Vorlauftemperatur des Teilnehmers |
-| `sensors.return_temp` | Rücklauftemperatur des Teilnehmers |
-| `sensors.power` | Thermische Leistung in kW (optional; bestimmt die Flussbreite) |
-| `pump` | Binary-Sensor/Schalter der Pumpe (optional). Ist gesetzt, zählt nur das Pumpensignal |
-| `pump_direction` | `to` (zum Teilnehmer) oder `from` (vom Teilnehmer weg) |
-| `direction` | Feste Flussrichtung ohne Pumpe (Default: `from` bei generator/solar, `to` bei emitter) |
-| `threshold` | Minimale Temperaturdifferenz für einen Fluss ohne Pumpe (Default `0.5` K) |
-| `layers` | Nur `storage`: Liste von `{ name, temp }` für die Schichtung |
+| `id` | Unique ID |
+| `type` | `generator`, `solar`, `emitter` or `storage` |
+| `name` | Display name |
+| `sensors.flow_temp` | Supply temperature of the participant |
+| `sensors.return_temp` | Return temperature of the participant |
+| `sensors.power` | Thermal power in kW (optional; controls flow width) |
+| `pump` | Binary sensor/switch of the pump (optional). If set, only the pump signal counts |
+| `pump_direction` | `to` (towards the participant) or `from` (away from it) |
+| `direction` | Fixed flow direction when no pump is configured (default: `from` for generator/solar, `to` for emitter) |
+| `threshold` | Minimum temperature difference for a flow without pump (default `0.5` K) |
+| `layers` | `storage` only: list of `{ name, temp }` for the layers |
 
-### Flusslogik
+### Flow logic
 
-- **Mit Pumpe:** Pumpe an → Fluss in Richtung `pump_direction`; Pumpe aus → kein Fluss.
-- **Ohne Pumpe:** Fluss, sobald |Vorlauf – Rücklauf| > `threshold`. Richtung über `direction` bzw. Ty-Default.
-- **Speicher:** Vergleich der mittleren Schichttemperatur mit der mittleren Vorlauftemperatur
-  der Erzeuger/Solar. Bus wärmer → laden (Pfeil in den Speicher), Speicher wärmer → entladen.
+- **With pump:** pump on → flow in direction `pump_direction`; pump off → no flow.
+- **Without pump:** flow as soon as |supply – return| > `threshold`. Direction via `direction` or type default.
+- **Storage:** compares the average layer temperature with the average supply temperature
+  of the generators/solar. Bus warmer → charging (flow into the tank), storage warmer → discharging.
 
-Die Breite der animierten Flusslinien skaliert mit Leistung (kW) bzw. Temperaturdifferenz.
+The width of the animated flow lines scales with power (kW) or temperature difference.

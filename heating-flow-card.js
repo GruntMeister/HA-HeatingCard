@@ -10,10 +10,10 @@
   const CARD_TYPE = 'heating-flow-card';
 
   const TYPE_INFO = {
-    generator: { dir: 'from', color: '#ff7043', label: 'Erzeuger' },
+    generator: { dir: 'from', color: '#ff7043', label: 'Generator' },
     solar: { dir: 'from', color: '#ffd54f', label: 'Solar' },
-    emitter: { dir: 'to', color: '#4dd0e1', label: 'Verbraucher' },
-    storage: { dir: 'to', color: '#a1887f', label: 'Speicher' }
+    emitter: { dir: 'to', color: '#4dd0e1', label: 'Emitter' },
+    storage: { dir: 'to', color: '#a1887f', label: 'Storage' }
   };
 
   const CSS = [
@@ -185,12 +185,12 @@
       }
     }
     segs += '<rect x="' + tankX + '" y="' + tankY + '" width="' + tankW + '" height="' + tankH + '" rx="5" fill="none" stroke="var(--primary-text-color, #ffffff)" stroke-width="1.2" opacity="0.7"/>';
-    let labels = '<text class="hfc-name" x="' + (bx + 64) + '" y="' + (by + 22) + '">' + esc(String(p.name || 'Speicher').slice(0, 16)) + '</text>';
+    let labels = '<text class="hfc-name" x="' + (bx + 64) + '" y="' + (by + 22) + '">' + esc(String(p.name || 'Storage').slice(0, 16)) + '</text>';
     const lh2 = Math.min(14, (BOX_H - 30) / Math.max(1, layers.length));
     for (i = 0; i < layers.length; i++) {
       ly = by + 36 + i * lh2;
       labels += '<text class="hfc-sub" x="' + (bx + 64) + '" y="' + ly.toFixed(1) + '">' +
-        esc(String(layers[i].name || 'Schicht ' + (i + 1)).slice(0, 8)) + ': ' +
+        esc(String(layers[i].name || 'Layer ' + (i + 1)).slice(0, 8)) + ': ' +
         (layers[i].temp != null ? layers[i].temp.toFixed(1) + '°' : '–') + '</text>';
     }
     return '<g><rect class="hfc-box" x="' + bx + '" y="' + by + '" width="' + W + '" height="' + BOX_H + '" rx="10"/>' + segs + labels + '</g>';
@@ -207,14 +207,14 @@
 
     setConfig(config) {
       if (!config || !Array.isArray(config.participants) || config.participants.length === 0) {
-        throw new Error('heating-flow-card: "participants" (Liste) fehlt oder ist leer.');
+        throw new Error('heating-flow-card: "participants" (list) is missing or empty.');
       }
       config.participants.forEach((p) => {
         if (!p.type || !TYPE_INFO[p.type]) {
-          throw new Error('heating-flow-card: unbekannter Teilnehmer-Typ "' + p.type + '" (erlaubt: generator, solar, emitter, storage).');
+          throw new Error('heating-flow-card: unknown participant type "' + p.type + '" (allowed: generator, solar, emitter, storage).');
         }
         if (p.type === 'storage' && (!Array.isArray(p.layers) || p.layers.length === 0)) {
-          throw new Error('heating-flow-card: Speicher "' + (p.name || p.id || '?') + '" benötigt "layers".');
+          throw new Error('heating-flow-card: storage "' + (p.name || p.id || '?') + '" requires "layers".');
         }
       });
       this._config = config;
@@ -232,11 +232,11 @@
 
     getStubConfig() {
       return {
-        title: 'Heizung',
+        title: 'Heating',
         participants: [
-          { id: 'erzeuger', type: 'generator', name: 'Wärmeerzeuger', sensors: { flow_temp: 'sensor.vorlauf', return_temp: 'sensor.ruecklauf' } },
-          { id: 'speicher', type: 'storage', name: 'Puffer', layers: [{ name: 'Oben', temp: 'sensor.puffer_oben' }, { name: 'Unten', temp: 'sensor.puffer_unten' }] },
-          { id: 'heizkreis', type: 'emitter', name: 'Heizkreis', sensors: { flow_temp: 'sensor.hk_vorlauf', return_temp: 'sensor.hk_ruecklauf' } }
+          { id: 'generator', type: 'generator', name: 'Heat generator', sensors: { flow_temp: 'sensor.supply', return_temp: 'sensor.return' } },
+          { id: 'buffer', type: 'storage', name: 'Buffer tank', layers: [{ name: 'Top', temp: 'sensor.buffer_top' }, { name: 'Bottom', temp: 'sensor.buffer_bottom' }] },
+          { id: 'heating', type: 'emitter', name: 'Heating circuit', sensors: { flow_temp: 'sensor.hc_supply', return_temp: 'sensor.hc_return' } }
         ]
       };
     }
@@ -333,7 +333,7 @@
   window.customCards.push({
     type: CARD_TYPE,
     name: 'Heating Flow Card',
-    description: 'Visualisiert Heizungsanlagen mit animierten Flüssen auf Basis von Temperaturdifferenzen und Pumpen-Signalen.',
+    description: 'Visualizes heating systems with animated flows based on temperature differences and pump enable signals.',
     preview: true
   });
 })();
