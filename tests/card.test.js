@@ -121,11 +121,15 @@ test('render: no line intersects any text (lines stop at box edges)', () => {
   assert.deepEqual(findLineTextOverlaps(el.innerHTML), []);
 });
 
-test('render: temperatures are highlighted (white, bold), power stays grey', () => {
+test('render: only temperature numbers are highlighted (white, bold)', () => {
   const el = renderCard(Card, EXAMPLE_CONFIG, EXAMPLE_STATES);
-  const tempLines = el.innerHTML.match(/<text class="hfc-temp"[^>]*>[^<]*VL[^<]*<\/text>/g) || [];
-  assert.equal(tempLines.length, 4); // 2 sources + 2 emitters have VL/RL
-  assert.match(el.innerHTML, /\.hfc-temp \{ fill: #ffffff; font-size: 11px; font-weight: 700; \}/);
+  // 4 participants with VL/RL (2 values each) + 3 tank layers = 11 numeric tspans
+  const tspans = el.innerHTML.match(/<tspan class="hfc-temp">[^<]*<\/tspan>/g) || [];
+  assert.equal(tspans.length, 11);
+  assert.ok(tspans.every((t) => /[\d.–]/.test(t)));
+  assert.match(el.innerHTML, /\.hfc-temp \{ fill: #ffffff; font-weight: 700; \}/);
+  // labels stay grey, power stays grey
+  assert.ok(el.innerHTML.includes('VL <tspan'));
   assert.ok(el.innerHTML.includes('3.2 kW'));
 });
 

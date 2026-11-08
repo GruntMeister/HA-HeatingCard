@@ -105,7 +105,7 @@ function inlineStyles(svg) {
     'hfc-title': 'fill:#212121;font-size:14px;font-weight:600;font-family:sans-serif',
     'hfc-name': 'fill:#ffffff;font-size:12px;font-weight:600;font-family:sans-serif',
     'hfc-sub': 'fill:#9e9e9e;font-size:11px;font-family:sans-serif',
-    'hfc-temp': 'fill:#ffffff;font-size:11px;font-weight:700;font-family:sans-serif',
+    'hfc-temp': 'fill:#ffffff;font-weight:700',
     'hfc-bus': 'stroke:#3a3a3a;stroke-width:3;stroke-linecap:round',
     'hfc-line': 'fill:none;stroke-linecap:round',
     'hfc-line-off': 'stroke:#3a3a3a;stroke-width:2;opacity:0.5',

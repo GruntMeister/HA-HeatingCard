@@ -22,7 +22,7 @@
     '.hfc-title { fill: #ffffff; font-size: 14px; font-weight: 600; }',
     '.hfc-name { fill: #ffffff; font-size: 12px; font-weight: 600; }',
     '.hfc-sub { fill: #9e9e9e; font-size: 11px; }',
-    '.hfc-temp { fill: #ffffff; font-size: 11px; font-weight: 700; }',
+    '.hfc-temp { fill: #ffffff; font-weight: 700; }',
     '.hfc-bus { stroke: #757575; stroke-width: 3; stroke-linecap: round; }',
     '.hfc-line { fill: none; stroke-linecap: round; }',
     '.hfc-line-off { stroke: #757575; stroke-width: 2; opacity: 0.5; }',
@@ -151,9 +151,9 @@
     const color = TYPE_INFO[p.type].color;
     let lines = '';
     if (x.tf != null || x.tr != null) {
-      lines += '<text class="hfc-temp" x="' + (bx + 46) + '" y="' + (by + 42) + '">' +
-        (x.tf != null ? 'VL ' + x.tf.toFixed(1) + '°' : 'VL –') + '  ' +
-        (x.tr != null ? 'RL ' + x.tr.toFixed(1) + '°' : 'RL –') + '</text>';
+      lines += '<text class="hfc-sub" x="' + (bx + 46) + '" y="' + (by + 42) + '">' +
+        'VL <tspan class="hfc-temp">' + (x.tf != null ? x.tf.toFixed(1) + '°' : '–') + '</tspan>' + '  ' +
+        'RL <tspan class="hfc-temp">' + (x.tr != null ? x.tr.toFixed(1) + '°' : '–') + '</tspan></text>';
       lines += '<text class="hfc-sub" x="' + (bx + 46) + '" y="' + (by + 58) + '">' +
         (x.power != null ? x.power.toFixed(1) + ' kW' : (f.dT != null ? 'ΔT ' + f.dT.toFixed(1) + ' K' : '')) + '</text>';
     } else if (x.power != null) {
@@ -185,7 +185,7 @@
       ly = by + 36 + i * lh2;
       labels += '<text class="hfc-sub" x="' + (bx + 64) + '" y="' + ly.toFixed(1) + '">' +
         esc(String(layers[i].name || 'Layer ' + (i + 1)).slice(0, 8)) + ': ' +
-        (layers[i].temp != null ? layers[i].temp.toFixed(1) + '°' : '–') + '</text>';
+        '<tspan class="hfc-temp">' + (layers[i].temp != null ? layers[i].temp.toFixed(1) + '°' : '–') + '</tspan></text>';
     }
     return '<g><rect class="hfc-box" x="' + bx + '" y="' + by + '" width="' + W + '" height="' + BOX_H + '" rx="10"/>' + segs + labels + '</g>';
   }
