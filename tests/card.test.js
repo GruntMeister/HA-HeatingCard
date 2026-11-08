@@ -121,6 +121,14 @@ test('render: no line intersects any text (lines stop at box edges)', () => {
   assert.deepEqual(findLineTextOverlaps(el.innerHTML), []);
 });
 
+test('render: temperatures are highlighted (white, bold), power stays grey', () => {
+  const el = renderCard(Card, EXAMPLE_CONFIG, EXAMPLE_STATES);
+  const tempLines = el.innerHTML.match(/<text class="hfc-temp"[^>]*>[^<]*VL[^<]*<\/text>/g) || [];
+  assert.equal(tempLines.length, 4); // 2 sources + 2 emitters have VL/RL
+  assert.match(el.innerHTML, /\.hfc-temp \{ fill: #ffffff; font-size: 11px; font-weight: 700; \}/);
+  assert.ok(el.innerHTML.includes('3.2 kW'));
+});
+
 test('render: CSS is embedded inside the SVG (shadow-DOM safe)', () => {
   const el = renderCard(Card, EXAMPLE_CONFIG, EXAMPLE_STATES);
   const svgStart = el.innerHTML.indexOf('<svg');
