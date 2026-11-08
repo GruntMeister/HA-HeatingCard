@@ -11,6 +11,11 @@ function count(haystack, needle) {
   return haystack.split(needle).length - 1;
 }
 
+// count actual <line> elements carrying a given class (not CSS rules)
+function countLines(html, cls) {
+  return (html.match(new RegExp('<line class="hfc-line ' + cls, 'g')) || []).length;
+}
+
 test('setConfig rejects missing participants', () => {
   const el = new Card();
   assert.throws(() => el.setConfig({}), /participants/);
@@ -69,8 +74,8 @@ test('render: active flows are animated, pump-off flows are off', () => {
   const states = { ...EXAMPLE_STATES, 'binary_sensor.hc1_pump': 'off' };
   const el = renderCard(Card, EXAMPLE_CONFIG, states);
   // 2 sources + 1 emitter + 1 tank overlay are active; hc1 is off
-  assert.equal(count(el.innerHTML, 'hfc-flow'), 4);
-  assert.equal(count(el.innerHTML, 'hfc-line-off'), 1);
+  assert.equal(countLines(el.innerHTML, 'hfc-flow'), 4);
+  assert.equal(countLines(el.innerHTML, 'hfc-line-off'), 1);
 });
 
 test('render: direction classes follow pump_direction (source=from -> fwd, emitter=to -> fwd)', () => {
@@ -89,10 +94,10 @@ test('flow logic: no pump -> temperature difference decides (threshold 0.5 K)', 
     ]
   };
   const active = renderCard(Card, cfg, { 's.a': 40, 's.b': 35, 's.c': 39, 's.d': 33 });
-  assert.equal(count(active.innerHTML, 'hfc-flow'), 2);
+  assert.equal(countLines(active.innerHTML, 'hfc-flow'), 2);
   const idle = renderCard(Card, cfg, { 's.a': 40, 's.b': 39.8, 's.c': 39, 's.d': 38.9 });
-  assert.equal(count(idle.innerHTML, 'hfc-flow'), 0);
-  assert.equal(count(idle.innerHTML, 'hfc-line-off'), 2);
+  assert.equal(countLines(idle.innerHTML, 'hfc-flow'), 0);
+  assert.equal(countLines(idle.innerHTML, 'hfc-line-off'), 2);
 });
 
 test('flow logic: storage charges when bus is warmer, discharges when cooler', () => {
@@ -104,7 +109,7 @@ test('flow logic: storage charges when bus is warmer, discharges when cooler', (
   };
   // bus temp 50, tank avg 40 -> charging ('to', forward along downward path)
   const charging = renderCard(Card, cfg, { 's.a': 50, 's.b': 45, p: 'on', 's.t1': 45, 's.t2': 35 });
-  assert.equal(count(charging.innerHTML, 'hfc-flow'), 2); // source + tank overlay
+  assert.equal(countLines(charging.innerHTML, 'hfc-flow'), 2); // source + tank overlay
   assert.ok(charging.innerHTML.match(/hfc-flow hfc-fwd/));
   // bus temp 30, tank avg 50 -> discharging ('from' -> reverse)
   const discharging = renderCard(Card, cfg, { 's.a': 30, 's.b': 28, p: 'on', 's.t1': 55, 's.t2': 45 });
