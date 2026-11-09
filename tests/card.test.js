@@ -202,6 +202,27 @@ test('flow logic: storage charges when bus is warmer, discharges when cooler', (
   assert.ok(discharging.innerHTML.match(/hfc-flow hfc-rev/));
 });
 
+test('render: tank color scale - red >=60, green <=30, gradient between', () => {
+  const cfg = {
+    participants: [
+      { id: 't', type: 'storage', name: 'Tank', layers: [
+        { name: 'Hot', temp: 's.hot' }, { name: 'Mid', temp: 's.mid' }, { name: 'Cold', temp: 's.cold' }
+      ] }
+    ]
+  };
+  const el = renderCard(Card, cfg, { 's.hot': 65, 's.mid': 45, 's.cold': 20 });
+  const fills = [...el.innerHTML.matchAll(/<rect x="\d+" y="[\d.]+" width="40" height="[\d.]+" fill="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(fills.length, 3);
+  assert.equal(fills[0], 'hsl(0, 80%, 50%)');     // >= 60 -> red
+  assert.equal(fills[1], 'hsl(60, 75%, 45%)');    // 45 -> halfway red->green
+  assert.equal(fills[2], 'hsl(120, 60%, 45%)');   // <= 30 -> green
+  // boundary values
+  const b = renderCard(Card, cfg, { 's.hot': 60, 's.mid': 30, 's.cold': 30 });
+  const bf = [...b.innerHTML.matchAll(/<rect x="\d+" y="[\d.]+" width="40" height="[\d.]+" fill="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(bf[0], 'hsl(0, 80%, 50%)');
+  assert.equal(bf[1], 'hsl(120, 60%, 45%)');
+});
+
 test('render: no line intersects any text (lines stop at box edges)', () => {
   const el = renderCard(Card, EXAMPLE_CONFIG, EXAMPLE_STATES);
   assert.deepEqual(findLineTextOverlaps(el.innerHTML), []);

@@ -45,8 +45,8 @@ Raw YAML:
 ```yaml
 type: custom:heating-flow-card
 title: Heating system
-min_temp: 5        # temperature range for the color scale (optional, default 5)
-max_temp: 80       # default 80
+min_temp: 30       # tank color scale: at/below this -> green (optional, default 30)
+max_temp: 60       # at/above this -> red; in between a red->green gradient (default 60)
 participants:
   - id: heatpump
     type: generator
@@ -95,7 +95,7 @@ participants:
 | Option | Type | Description |
 |---|---|---|
 | `title` | string | Optional card title |
-| `min_temp` / `max_temp` | number | Temperature range of the color scale (blue → red) |
+| `min_temp` / `max_temp` | number | Tank color scale: ≤ `min_temp` green, ≥ `max_temp` red, red→green gradient between (defaults 30 / 60) |
 | `participants` | list | Participants of the system (required) |
 
 ### Participant options

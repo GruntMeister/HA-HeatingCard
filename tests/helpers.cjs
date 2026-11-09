@@ -67,8 +67,8 @@ function renderCard(Card, config, states) {
 const EXAMPLE_CONFIG = {
   type: 'custom:heating-flow-card',
   title: 'Heating system',
-  min_temp: 5,
-  max_temp: 80,
+  min_temp: 30,
+  max_temp: 60,
   participants: [
     { id: 'heatpump', type: 'generator', name: 'Heat pump',
       sensors: { flow_temp: 'sensor.wp_supply', return_temp: 'sensor.wp_return', power: 'sensor.wp_power' },

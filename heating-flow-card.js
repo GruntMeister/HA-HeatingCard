@@ -52,11 +52,14 @@
     }[c]));
   }
 
+  // Fixed scale: >= max -> red, <= min -> green, gradient red->green in between.
   function tempColor(t, min, max) {
     if (t == null) return '#607d8b';
-    const x = Math.max(0, Math.min(1, (t - min) / ((max - min) || 1)));
-    const hue = 210 - 210 * x;
-    return 'hsl(' + hue.toFixed(0) + ', 80%, 50%)';
+    if (t >= max) return 'hsl(0, 80%, 50%)';
+    if (t <= min) return 'hsl(120, 60%, 45%)';
+    const x = (max - t) / ((max - min) || 1);
+    const hue = 120 * x;
+    return 'hsl(' + hue.toFixed(0) + ', 75%, 45%)';
   }
 
   function readParts(cfg, hass) {
@@ -257,8 +260,8 @@
       if (sig === this._lastSig) return;
       this._lastSig = sig;
 
-      const minT = cfg.min_temp != null ? cfg.min_temp : 5;
-      const maxT = cfg.max_temp != null ? cfg.max_temp : 80;
+      const minT = cfg.min_temp != null ? cfg.min_temp : 30;
+      const maxT = cfg.max_temp != null ? cfg.max_temp : 60;
       const W = 420, MARGIN = 12, BOX_W = 170, BOX_H = 68, ROW_H = 84, BUS_X = W / 2;
       const titleH = cfg.title ? 26 : 0;
 
@@ -599,8 +602,8 @@
       box.appendChild(this._field('Title', this._textInput(c.title || '', 'title')));
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;gap:8px';
-      row.appendChild(this._field('min_temp', this._numInput(c.min_temp != null ? c.min_temp : 5, 'min_temp')));
-      row.appendChild(this._field('max_temp', this._numInput(c.max_temp != null ? c.max_temp : 80, 'max_temp')));
+      row.appendChild(this._field('min_temp (below = green)', this._numInput(c.min_temp != null ? c.min_temp : 30, 'min_temp')));
+      row.appendChild(this._field('max_temp (above = red)', this._numInput(c.max_temp != null ? c.max_temp : 60, 'max_temp')));
       box.appendChild(row);
       c.participants.forEach((p, i) => box.appendChild(this._participantEditor(p, i)));
       box.appendChild(this._button('+ Add participant', 'add-participant'));
