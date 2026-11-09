@@ -142,28 +142,13 @@ test('render: active flows are animated, pump-off flows are off', () => {
   assert.equal(countLines(el.innerHTML, 'hfc-line-off'), 1);
 });
 
-function flowLinesOf(html) {
-  return [...html.matchAll(/<line class="hfc-line hfc-flow" x1="([\d.]+)" y1="([\d.]+)" x2="([\d.]+)" y2="([\d.]+)"[^>]*>/g)]
-    .map((m) => ({ x1: +m[1], y1: +m[2], x2: +m[3], y2: +m[4] }));
-}
-
-test('render: flow lines are drawn in flow direction and carry an arrow marker', () => {
+test('render: flow direction is encoded via animation class (fwd/rev), no arrow polygons', () => {
   const el = renderCard(Card, EXAMPLE_CONFIG, EXAMPLE_STATES);
-  const flows = flowLinesOf(el.innerHTML);
-  assert.equal(flows.length, 5);
-  // every flow line has an explicit arrow-head polygon at its end
-  assert.equal((el.innerHTML.match(/<polygon fill="#ff7043" points="[^"]+"\/>/g) || []).length, 5);
-  const W = 420, BUS_X = W / 2;
-  for (const f of flows) {
-    if (f.y1 === f.y2) {
-      // horizontal: sources flow rightwards to the bus (x1 < x2), emitters rightwards away from it
-      assert.ok(f.x1 < f.x2, 'horizontal flow drawn left-to-right: ' + JSON.stringify(f));
-      if (f.x2 <= BUS_X) assert.ok(f.x1 < BUS_X); // source side
-    } else {
-      // tank charging: downward into the tank (y1 < y2)
-      assert.ok(f.x1 === BUS_X && f.y1 < f.y2, 'tank flow drawn downward: ' + JSON.stringify(f));
-    }
-  }
+  const flowLines = el.innerHTML.match(/<line class="hfc-line hfc-flow[^"]*"[^>]*>/g) || [];
+  assert.equal(flowLines.length, 5);
+  // all example flows run forward along their drawn path
+  assert.ok(flowLines.every((l) => l.includes('hfc-fwd')));
+  assert.ok(!el.innerHTML.includes('<polygon'), 'no arrow-head polygons');
 });
 
 test('flow logic: no pump -> temperature difference decides (threshold 0.5 K)', () => {
@@ -187,15 +172,13 @@ test('flow logic: storage charges when bus is warmer, discharges when cooler', (
       { id: 't', type: 'storage', name: 'T', layers: [{ name: 'Top', temp: 's.t1' }, { name: 'Bot', temp: 's.t2' }] }
     ]
   };
-  // bus temp 50, tank avg 40 -> charging: tank flow line points downward (y1 < y2)
+  // bus temp 50, tank avg 40 -> charging ('to' = forward along the downward path)
   const charging = renderCard(Card, cfg, { 's.a': 50, 's.b': 45, p: 'on', 's.t1': 45, 's.t2': 35 });
   assert.equal(countLines(charging.innerHTML, 'hfc-flow'), 2); // source + tank overlay
-  const chargingTank = flowLinesOf(charging.innerHTML).find((f) => f.x1 === f.x2);
-  assert.ok(chargingTank && chargingTank.y1 < chargingTank.y2, 'charging flows down into the tank');
-  // bus temp 30, tank avg 50 -> discharging: tank flow line points upward (y1 > y2)
+  assert.ok(charging.innerHTML.match(/hfc-flow hfc-fwd/));
+  // bus temp 30, tank avg 50 -> discharging ('from' = reversed animation)
   const discharging = renderCard(Card, cfg, { 's.a': 30, 's.b': 28, p: 'on', 's.t1': 55, 's.t2': 45 });
-  const dischargingTank = flowLinesOf(discharging.innerHTML).find((f) => f.x1 === f.x2);
-  assert.ok(dischargingTank && dischargingTank.y1 > dischargingTank.y2, 'discharging flows up out of the tank');
+  assert.ok(discharging.innerHTML.match(/hfc-flow hfc-rev/));
 });
 
 test('render: no line intersects any text (lines stop at box edges)', () => {
