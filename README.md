@@ -33,10 +33,12 @@ Manual installation: copy `heating-flow-card.js` to
 
 ## Configuration
 
-The card has a **UI configurator**: in the dashboard editor, edit the card
-visually – fields for `title`, `min_temp`, `max_temp` and a JSON textarea for
-`participants` (JSON is valid YAML). Invalid JSON is shown as an error and not
-applied.
+The card has a **UI configurator**: in the dashboard editor you can edit the
+card as a form – `title`, `min_temp`, `max_temp`, and one section per
+participant with a type selector, name, and **entity pickers** to search and
+select the sensors (`flow_temp`, `return_temp`, `power`, `pump`), the pump
+direction, and – for tanks – an editable list of layers (name + temperature
+sensor each). Participants and layers can be added/removed with buttons.
 
 Raw YAML:
 

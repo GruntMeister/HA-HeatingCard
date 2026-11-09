@@ -55,6 +55,10 @@ test('UI configurator: form editor mutates config and fires config-changed', () 
   assert.equal(ed._config.title, 'My title');
   assert.equal(ed.lastEvent.type, 'config-changed');
   assert.equal(ed.lastEvent.detail.config.title, 'My title');
+  // the fired config must keep the custom: prefix, otherwise HA errors out
+  assert.equal(ed.lastEvent.detail.config.type, 'custom:heating-flow-card');
+  assert.equal(ed._config.type, 'custom:heating-flow-card');
+  assert.equal(new Card().getStubConfig().type, 'custom:heating-flow-card');
 
   ed._setCardField('min_temp', 10);
   ed._setCardField('max_temp', 90);

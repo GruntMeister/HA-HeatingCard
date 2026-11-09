@@ -230,6 +230,7 @@
 
     getStubConfig() {
       return {
+        type: 'custom:' + CARD_TYPE,
         title: 'Heating',
         participants: [
           { id: 'generator', type: 'generator', name: 'Heat generator', sensors: { flow_temp: 'sensor.supply', return_temp: 'sensor.return' } },
@@ -338,7 +339,7 @@
 
     setConfig(config) {
       const c = JSON.parse(JSON.stringify(config || {}));
-      c.type = CARD_TYPE;
+      c.type = 'custom:' + CARD_TYPE;
       if (!Array.isArray(c.participants)) c.participants = [];
       this._config = c;
       this._renderEditor();
@@ -353,8 +354,10 @@
     }
 
     _commit(rerender) {
+      const config = JSON.parse(JSON.stringify(this._config));
+      config.type = 'custom:' + CARD_TYPE;
       this.dispatchEvent(new CustomEvent('config-changed', {
-        detail: { config: JSON.parse(JSON.stringify(this._config)) },
+        detail: { config },
         bubbles: true,
         composed: true
       }));
