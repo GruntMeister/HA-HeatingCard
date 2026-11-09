@@ -328,12 +328,19 @@
   class HeatingFlowCardEditor extends HTMLElement {
     constructor() {
       super();
-      this._config = {};
-      this.addEventListener('input', () => this._onInput());
+      this._config = { type: CARD_TYPE, participants: [] };
+      this._hass = null;
+      this.addEventListener('input', (ev) => this._onInput(ev));
+      this.addEventListener('change', (ev) => this._onChange(ev));
+      this.addEventListener('value-changed', (ev) => this._onValueChanged(ev));
+      this.addEventListener('click', (ev) => this._onClick(ev));
     }
 
     setConfig(config) {
-      this._config = JSON.parse(JSON.stringify(config || {}));
+      const c = JSON.parse(JSON.stringify(config || {}));
+      c.type = CARD_TYPE;
+      if (!Array.isArray(c.participants)) c.participants = [];
+      this._config = c;
       this._renderEditor();
     }
 
@@ -341,48 +348,241 @@
       this.setConfig(config);
     }
 
-    set hass(_hass) {}
+    set hass(h) {
+      this._hass = h;
+    }
+
+    _commit(rerender) {
+      this.dispatchEvent(new CustomEvent('config-changed', {
+        detail: { config: JSON.parse(JSON.stringify(this._config)) },
+        bubbles: true,
+        composed: true
+      }));
+      if (rerender) this._renderEditor();
+    }
+
+    _setCardField(field, value) {
+      if (field === 'title') {
+        if (value) this._config.title = value; else delete this._config.title;
+      } else if (Number.isFinite(value)) {
+        this._config[field] = value;
+      } else {
+        delete this._config[field];
+      }
+      this._commit(false);
+    }
+
+    _setParticipantField(i, field, value) {
+      const p = this._config.participants[i];
+      if (!p) return;
+      if (field === 'type') {
+        p.type = value;
+        if (value === 'storage' && !Array.isArray(p.layers)) p.layers = [{ name: 'Top', temp: '' }];
+        if (value !== 'storage') delete p.layers;
+        this._commit(true);
+      } else if (field === 'name') {
+        p.name = value;
+        this._commit(false);
+      } else if (field === 'pump_direction') {
+        if (value) p.pump_direction = value; else delete p.pump_direction;
+        this._commit(false);
+      } else if (field.indexOf('sensor.') === 0) {
+        const key = field.slice(7);
+        p.sensors = p.sensors || {};
+        if (value) p.sensors[key] = value; else delete p.sensors[key];
+        this._commit(false);
+      }
+    }
+
+    _setLayerField(i, j, field, value) {
+      const p = this._config.participants[i];
+      if (!p || !Array.isArray(p.layers) || !p.layers[j]) return;
+      if (field === 'name') p.layers[j].name = value;
+      else if (field === 'temp') {
+        if (value) p.layers[j].temp = value; else delete p.layers[j].temp;
+      }
+      this._commit(false);
+    }
+
+    _addParticipant() {
+      this._config.participants.push({
+        id: 'p' + this._config.participants.length,
+        type: 'generator',
+        name: 'New participant',
+        sensors: {}
+      });
+      this._commit(true);
+    }
+
+    _removeParticipant(i) {
+      this._config.participants.splice(i, 1);
+      this._commit(true);
+    }
+
+    _addLayer(i) {
+      const p = this._config.participants[i];
+      if (!p) return;
+      p.layers = p.layers || [];
+      p.layers.push({ name: 'Layer ' + (p.layers.length + 1), temp: '' });
+      this._commit(true);
+    }
+
+    _removeLayer(i, j) {
+      const p = this._config.participants[i];
+      if (p && Array.isArray(p.layers)) {
+        p.layers.splice(j, 1);
+        this._commit(true);
+      }
+    }
+
+    _onInput(ev) {
+      const t = ev.target, role = t.dataset && t.dataset.role;
+      if (!role) return;
+      if (role === 'title') this._setCardField('title', t.value);
+      else if (role === 'min_temp') this._setCardField('min_temp', parseFloat(t.value));
+      else if (role === 'max_temp') this._setCardField('max_temp', parseFloat(t.value));
+      else if (role === 'p-name') this._setParticipantField(+t.dataset.idx, 'name', t.value);
+      else if (role === 'layer-name') this._setLayerField(+t.dataset.idx, +t.dataset.layer, 'name', t.value);
+    }
+
+    _onChange(ev) {
+      const t = ev.target, role = t.dataset && t.dataset.role;
+      if (!role) return;
+      if (role === 'p-type') this._setParticipantField(+t.dataset.idx, 'type', t.value);
+      else if (role === 'p-dir') this._setParticipantField(+t.dataset.idx, 'pump_direction', t.value);
+    }
+
+    _onValueChanged(ev) {
+      const t = ev.target, role = t.dataset && t.dataset.role;
+      if (!role) return;
+      const value = (ev.detail && ev.detail.value) || '';
+      if (role === 'p-sensor') this._setParticipantField(+t.dataset.idx, 'sensor.' + t.dataset.field, value);
+      else if (role === 'layer-temp') this._setLayerField(+t.dataset.idx, +t.dataset.layer, 'temp', value);
+    }
+
+    _onClick(ev) {
+      const t = ev.target, action = t.dataset && t.dataset.action;
+      if (!action) return;
+      if (action === 'add-participant') this._addParticipant();
+      else if (action === 'remove-participant') this._removeParticipant(+t.dataset.idx);
+      else if (action === 'add-layer') this._addLayer(+t.dataset.idx);
+      else if (action === 'remove-layer') this._removeLayer(+t.dataset.idx, +t.dataset.layer);
+    }
+
+    _field(labelText, control) {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'margin-bottom:8px';
+      if (labelText) {
+        const lab = document.createElement('label');
+        lab.textContent = labelText;
+        lab.style.cssText = 'display:block;font-size:12px;margin-bottom:2px';
+        wrap.appendChild(lab);
+      }
+      wrap.appendChild(control);
+      return wrap;
+    }
+
+    _textInput(value, role, extra) {
+      const inp = document.createElement('input');
+      inp.value = value || '';
+      inp.dataset.role = role;
+      if (extra) Object.assign(inp.dataset, extra);
+      inp.style.cssText = 'width:100%;box-sizing:border-box';
+      return inp;
+    }
+
+    _numInput(value, role) {
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.value = value;
+      inp.dataset.role = role;
+      inp.style.cssText = 'width:100%;box-sizing:border-box';
+      return inp;
+    }
+
+    _select(value, options, role, extra) {
+      const sel = document.createElement('select');
+      sel.dataset.role = role;
+      if (extra) Object.assign(sel.dataset, extra);
+      sel.style.cssText = 'width:100%';
+      options.forEach(([val, label]) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = label;
+        if (val === value) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      return sel;
+    }
+
+    _entityPicker(labelText, value, role, extra) {
+      const picker = document.createElement('ha-entity-picker');
+      if (this._hass) picker.hass = this._hass;
+      picker.label = labelText;
+      picker.value = value || '';
+      picker.dataset.role = role;
+      if (extra) Object.assign(picker.dataset, extra);
+      return this._field(null, picker);
+    }
+
+    _button(labelText, action, extra) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = labelText;
+      btn.dataset.action = action;
+      if (extra) Object.assign(btn.dataset, extra);
+      btn.style.cssText = 'margin:4px 8px 4px 0;cursor:pointer';
+      return btn;
+    }
+
+    _participantEditor(p, i) {
+      const fs = document.createElement('fieldset');
+      fs.style.cssText = 'margin:0 0 12px;padding:8px;border:1px solid #424242;border-radius:8px';
+      const head = document.createElement('div');
+      head.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:8px';
+      head.appendChild(this._field('Type', this._select(p.type, [
+        ['generator', 'Generator'], ['solar', 'Solar'], ['emitter', 'Emitter'], ['storage', 'Storage (tank)']
+      ], 'p-type', { idx: i })));
+      head.appendChild(this._field('Name', this._textInput(p.name || '', 'p-name', { idx: i })));
+      head.appendChild(this._button('Remove', 'remove-participant', { idx: i }));
+      fs.appendChild(head);
+
+      if (p.type === 'storage') {
+        (p.layers || []).forEach((l, j) => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;gap:8px;align-items:flex-end';
+          row.appendChild(this._field('Layer name', this._textInput(l.name || '', 'layer-name', { idx: i, layer: j })));
+          row.appendChild(this._entityPicker('Temperature sensor', l.temp, 'layer-temp', { idx: i, layer: j }));
+          row.appendChild(this._button('Remove', 'remove-layer', { idx: i, layer: j }));
+          fs.appendChild(row);
+        });
+        fs.appendChild(this._button('+ Add layer', 'add-layer', { idx: i }));
+      } else {
+        const s = p.sensors || {};
+        fs.appendChild(this._entityPicker('Flow temperature (flow_temp)', s.flow_temp, 'p-sensor', { idx: i, field: 'flow_temp' }));
+        fs.appendChild(this._entityPicker('Return temperature (return_temp)', s.return_temp, 'p-sensor', { idx: i, field: 'return_temp' }));
+        fs.appendChild(this._entityPicker('Power kW (optional)', s.power, 'p-sensor', { idx: i, field: 'power' }));
+        fs.appendChild(this._entityPicker('Pump (optional)', p.pump, 'p-sensor', { idx: i, field: 'pump' }));
+        fs.appendChild(this._field('Pump direction', this._select(p.pump_direction || '', [
+          ['', 'default by type'], ['to', 'to (towards participant)'], ['from', 'from (away from participant)']
+        ], 'p-dir', { idx: i })));
+      }
+      return fs;
+    }
 
     _renderEditor() {
       const c = this._config;
-      this.innerHTML =
-        '<div style="margin-bottom:8px"><label style="display:block;font-size:12px">Title</label>' +
-        '<input id="hfc-ed-title" style="width:100%" value="' + esc(c.title || '') + '"></div>' +
-        '<div style="display:flex;gap:8px;margin-bottom:8px">' +
-        '<div style="flex:1"><label style="display:block;font-size:12px">min_temp</label>' +
-        '<input id="hfc-ed-min" type="number" style="width:100%" value="' + (c.min_temp != null ? c.min_temp : 5) + '"></div>' +
-        '<div style="flex:1"><label style="display:block;font-size:12px">max_temp</label>' +
-        '<input id="hfc-ed-max" type="number" style="width:100%" value="' + (c.max_temp != null ? c.max_temp : 80) + '"></div></div>' +
-        '<label style="display:block;font-size:12px">participants (JSON)</label>' +
-        '<textarea id="hfc-ed-parts" rows="14" style="width:100%;font-family:monospace">' +
-        esc(JSON.stringify(c.participants || [], null, 2)) + '</textarea>' +
-        '<div id="hfc-ed-err" style="color:#ff5252;font-size:12px;margin-top:4px"></div>';
-    }
-
-    _buildConfig(title, min, max, participantsJson) {
-      const participants = JSON.parse(participantsJson);
-      const config = { type: CARD_TYPE, participants };
-      if (title) config.title = title;
-      if (Number.isFinite(min)) config.min_temp = min;
-      if (Number.isFinite(max)) config.max_temp = max;
-      return config;
-    }
-
-    _onInput() {
-      const err = this.querySelector('#hfc-ed-err');
-      try {
-        const config = this._buildConfig(
-          this.querySelector('#hfc-ed-title').value,
-          parseFloat(this.querySelector('#hfc-ed-min').value),
-          parseFloat(this.querySelector('#hfc-ed-max').value),
-          this.querySelector('#hfc-ed-parts').value
-        );
-        this._config = config;
-        if (err) err.textContent = '';
-        this.dispatchEvent(new CustomEvent('config-changed', { detail: { config }, bubbles: true, composed: true }));
-      } catch (e) {
-        if (err) err.textContent = String((e && e.message) || e);
-      }
+      this.innerHTML = '';
+      const box = document.createElement('div');
+      box.appendChild(this._field('Title', this._textInput(c.title || '', 'title')));
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px';
+      row.appendChild(this._field('min_temp', this._numInput(c.min_temp != null ? c.min_temp : 5, 'min_temp')));
+      row.appendChild(this._field('max_temp', this._numInput(c.max_temp != null ? c.max_temp : 80, 'max_temp')));
+      box.appendChild(row);
+      c.participants.forEach((p, i) => box.appendChild(this._participantEditor(p, i)));
+      box.appendChild(this._button('+ Add participant', 'add-participant'));
+      this.appendChild(box);
     }
   }
 

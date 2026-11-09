@@ -16,8 +16,12 @@ function installDom() {
       this.textContent = '';
       this.innerHTML = '';
       this.value = '';
+      this.dataset = {};
+      this.style = { cssText: '' };
       this.listeners = {};
+      this.children = [];
     }
+    appendChild(c) { this.children.push(c); return c; }
     addEventListener(t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); }
     dispatchEvent(ev) { this.lastEvent = ev; return true; }
     querySelector() { return null; }

@@ -45,19 +45,50 @@ test('getStubConfig produces a valid config', () => {
   assert.equal(stub.participants.length, 3);
 });
 
-test('UI configurator: config element is registered and builds config', () => {
+test('UI configurator: form editor mutates config and fires config-changed', () => {
   assert.ok(Editor, 'editor custom element registered');
   const ed = new Editor();
   ed.setConfig(EXAMPLE_CONFIG);
-  assert.match(ed.innerHTML, /hfc-ed-parts/);
-  assert.match(ed.innerHTML, /Heat pump/);
-  const built = ed._buildConfig('My title', 10, 90, JSON.stringify(EXAMPLE_CONFIG.participants));
-  assert.equal(built.type, 'heating-flow-card');
-  assert.equal(built.title, 'My title');
-  assert.equal(built.min_temp, 10);
-  assert.equal(built.max_temp, 90);
-  assert.equal(built.participants.length, 5);
-  assert.throws(() => ed._buildConfig('', 5, 80, '{invalid json'), /JSON/);
+  assert.equal(ed._config.participants.length, 5);
+
+  ed._setCardField('title', 'My title');
+  assert.equal(ed._config.title, 'My title');
+  assert.equal(ed.lastEvent.type, 'config-changed');
+  assert.equal(ed.lastEvent.detail.config.title, 'My title');
+
+  ed._setCardField('min_temp', 10);
+  ed._setCardField('max_temp', 90);
+  assert.equal(ed._config.min_temp, 10);
+  assert.equal(ed._config.max_temp, 90);
+
+  ed._setParticipantField(0, 'sensor.flow_temp', 'sensor.new_supply');
+  assert.equal(ed._config.participants[0].sensors.flow_temp, 'sensor.new_supply');
+  ed._setParticipantField(0, 'pump_direction', 'from');
+  assert.equal(ed._config.participants[0].pump_direction, 'from');
+
+  // switching tank -> generator drops layers, switching back restores a default layer
+  ed._setParticipantField(2, 'type', 'generator');
+  assert.equal(ed._config.participants[2].layers, undefined);
+  ed._setParticipantField(2, 'type', 'storage');
+  assert.equal(ed._config.participants[2].layers.length, 1);
+
+  ed._addLayer(2);
+  ed._setLayerField(2, 1, 'name', 'Bottom');
+  ed._setLayerField(2, 1, 'temp', 'sensor.tank_bottom');
+  assert.equal(ed._config.participants[2].layers[1].temp, 'sensor.tank_bottom');
+  ed._removeLayer(2, 1);
+  assert.equal(ed._config.participants[2].layers.length, 1);
+
+  ed._addParticipant();
+  assert.equal(ed._config.participants.length, 6);
+  ed._removeParticipant(5);
+  assert.equal(ed._config.participants.length, 5);
+
+  // DOM event delegation routes to the same mutators
+  ed._onValueChanged({ target: { dataset: { role: 'p-sensor', idx: '3', field: 'power' } }, detail: { value: 'sensor.hc1_power' } });
+  assert.equal(ed._config.participants[3].sensors.power, 'sensor.hc1_power');
+  ed._onClick({ target: { dataset: { action: 'add-participant' } } });
+  assert.equal(ed._config.participants.length, 6);
 });
 
 test('render: svg with one box per participant plus title', () => {
