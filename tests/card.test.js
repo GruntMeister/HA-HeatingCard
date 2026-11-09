@@ -95,6 +95,35 @@ test('UI configurator: form editor mutates config and fires config-changed', () 
   assert.equal(ed._config.participants.length, 6);
 });
 
+test('UI configurator: pump picker writes to p.pump (not sensors.pump) and migrates old configs', () => {
+  const ed = new Editor();
+  ed.setConfig(EXAMPLE_CONFIG);
+  ed._onValueChanged({ target: { dataset: { role: 'p-sensor', idx: '3', field: 'pump' } }, detail: { value: 'binary_sensor.hc1_pump' } });
+  assert.equal(ed._config.participants[3].pump, 'binary_sensor.hc1_pump');
+  assert.equal(ed._config.participants[3].sensors.pump, undefined);
+
+  const legacy = JSON.parse(JSON.stringify(EXAMPLE_CONFIG));
+  legacy.participants[0].sensors.pump = 'binary_sensor.wp_compressor';
+  const ed2 = new Editor();
+  ed2.setConfig(legacy);
+  assert.equal(ed2._config.participants[0].pump, 'binary_sensor.wp_compressor');
+  assert.equal(ed2._config.participants[0].sensors.pump, undefined);
+});
+
+test('render: two emitters with pumps on both show flow (not only the lower one)', () => {
+  const cfg = {
+    participants: [
+      { id: 'g', type: 'generator', name: 'G', sensors: { flow_temp: 's.a', return_temp: 's.b' }, pump: 'p0', pump_direction: 'from' },
+      { id: 'e1', type: 'emitter', name: 'Heater 1', sensors: { flow_temp: 's.c', return_temp: 's.d' }, pump: 'p1', pump_direction: 'to' },
+      { id: 'e2', type: 'emitter', name: 'Heater 2', sensors: { flow_temp: 's.e', return_temp: 's.f' }, pump: 'p2', pump_direction: 'to' }
+    ]
+  };
+  const el = renderCard(Card, cfg, { 's.a': 45, 's.b': 40, p0: 'on', 's.c': 41, 's.d': 39.9, p1: 'on', 's.e': 40, 's.f': 39.9, p2: 'on' });
+  // pump decides, not dT: both emitters active even with tiny dT
+  assert.equal(countLines(el.innerHTML, 'hfc-flow'), 3);
+  assert.equal(countLines(el.innerHTML, 'hfc-line-off'), 0);
+});
+
 test('render: svg with one box per participant plus title', () => {
   const el = renderCard(Card, EXAMPLE_CONFIG, EXAMPLE_STATES);
   assert.match(el.innerHTML, /<svg/);

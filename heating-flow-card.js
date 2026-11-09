@@ -341,6 +341,13 @@
       const c = JSON.parse(JSON.stringify(config || {}));
       c.type = 'custom:' + CARD_TYPE;
       if (!Array.isArray(c.participants)) c.participants = [];
+      // migrate configs saved by older editor versions that stored the pump under sensors
+      c.participants.forEach((p) => {
+        if (p && p.sensors && p.sensors.pump) {
+          if (!p.pump) p.pump = p.sensors.pump;
+          delete p.sensors.pump;
+        }
+      });
       this._config = c;
       this._renderEditor();
     }
@@ -388,6 +395,9 @@
         this._commit(false);
       } else if (field === 'pump_direction') {
         if (value) p.pump_direction = value; else delete p.pump_direction;
+        this._commit(false);
+      } else if (field === 'pump') {
+        if (value) p.pump = value; else delete p.pump;
         this._commit(false);
       } else if (field.indexOf('sensor.') === 0) {
         const key = field.slice(7);
@@ -459,8 +469,12 @@
       const t = ev.target, role = t.dataset && t.dataset.role;
       if (!role) return;
       const value = (ev.detail && ev.detail.value) || '';
-      if (role === 'p-sensor') this._setParticipantField(+t.dataset.idx, 'sensor.' + t.dataset.field, value);
-      else if (role === 'layer-temp') this._setLayerField(+t.dataset.idx, +t.dataset.layer, 'temp', value);
+      if (role === 'p-sensor') {
+        const field = t.dataset.field === 'pump' ? 'pump' : 'sensor.' + t.dataset.field;
+        this._setParticipantField(+t.dataset.idx, field, value);
+      } else if (role === 'layer-temp') {
+        this._setLayerField(+t.dataset.idx, +t.dataset.layer, 'temp', value);
+      }
     }
 
     _onClick(ev) {
