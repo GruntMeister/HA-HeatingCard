@@ -42,6 +42,7 @@
   function isOn(hass, id) {
     const s = hass.states && hass.states[id];
     if (!s) return null;
+    if (['unavailable', 'unknown', 'none'].indexOf(s.state) !== -1) return null;
     return ['on', 'true', 'open', 'home', 'heat', 'active'].indexOf(s.state) !== -1;
   }
 
@@ -64,12 +65,14 @@
       const layers = Array.isArray(p.layers)
         ? p.layers.map((l) => ({ name: l.name || '', temp: num(hass, l.temp) }))
         : null;
+      // legacy configs (saved by older editor versions) may carry the pump under sensors.pump
+      const pumpId = p.pump || s.pump || null;
       return {
         p,
         tf: num(hass, s.flow_temp),
         tr: num(hass, s.return_temp),
         power: num(hass, s.power),
-        pump: p.pump ? isOn(hass, p.pump) : null,
+        pump: pumpId ? isOn(hass, pumpId) : null,
         layers
       };
     });

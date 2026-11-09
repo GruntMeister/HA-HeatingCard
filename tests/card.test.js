@@ -110,6 +110,27 @@ test('UI configurator: pump picker writes to p.pump (not sensors.pump) and migra
   assert.equal(ed2._config.participants[0].sensors.pump, undefined);
 });
 
+test('render: legacy config with pump under sensors.pump still drives the flow', () => {
+  const cfg = {
+    participants: [
+      { id: 'e1', type: 'emitter', name: 'HK oben', sensors: { flow_temp: 's.c', return_temp: 's.d', pump: 'p1' }, pump_direction: 'to' },
+      { id: 'e2', type: 'emitter', name: 'HK unten', sensors: { flow_temp: 's.e', return_temp: 's.f', pump: 'p2' }, pump_direction: 'to' }
+    ]
+  };
+  const el = renderCard(Card, cfg, { 's.c': 40, 's.d': 39.9, p1: 'on', 's.e': 40, 's.f': 39.9, p2: 'on' });
+  assert.equal(countLines(el.innerHTML, 'hfc-flow'), 2);
+});
+
+test('render: pump unavailable falls back to dT instead of hard-off', () => {
+  const cfg = {
+    participants: [
+      { id: 'e1', type: 'emitter', name: 'HK', sensors: { flow_temp: 's.c', return_temp: 's.d' }, pump: 'p1', pump_direction: 'to' }
+    ]
+  };
+  const el = renderCard(Card, cfg, { 's.c': 45, 's.d': 38, p1: 'unavailable' });
+  assert.equal(countLines(el.innerHTML, 'hfc-flow'), 1);
+});
+
 test('render: two emitters with pumps on both show flow (not only the lower one)', () => {
   const cfg = {
     participants: [
