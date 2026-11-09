@@ -27,8 +27,6 @@
     '.hfc-line { fill: none; stroke-linecap: round; }',
     '.hfc-line-off { stroke: #757575; stroke-width: 2; opacity: 0.5; }',
     '.hfc-flow { stroke-dasharray: 7 7; animation: hfc-dash 0.9s linear infinite; }',
-    '.hfc-fwd { animation-direction: normal; }',
-    '.hfc-rev { animation-direction: reverse; }',
     '@keyframes hfc-dash { to { stroke-dashoffset: -14; } }',
     '@media (prefers-reduced-motion: reduce) { .hfc-flow { animation: none; } }'
   ].join('\n');
@@ -273,13 +271,26 @@
       let maxMag = 0.0001;
       parts.forEach((x) => { if (x.flow.active) maxMag = Math.max(maxMag, x.flow.mag); });
 
+      // Draw the flow line in the actual flow direction (swap endpoints when
+      // reversed), so the dash animation and the arrow marker always point
+      // with the flow.
       const conn = (x1, y1, x2, y2, flow, forwardWhen) => {
         if (!flow.active || !flow.dir) {
           return '<line class="hfc-line hfc-line-off" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>';
         }
+        const fwd = flow.dir === forwardWhen;
+        const sx = fwd ? x1 : x2, sy = fwd ? y1 : y2;
+        const ex = fwd ? x2 : x1, ey = fwd ? y2 : y1;
         const w = 2.5 + 3.5 * Math.min(1, flow.mag / maxMag);
-        const cls = (flow.dir === forwardWhen) ? 'hfc-fwd' : 'hfc-rev';
-        return '<line class="hfc-line hfc-flow ' + cls + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#ff7043" stroke-width="' + w.toFixed(1) + '"/>';
+        // explicit arrow head (polygon renders everywhere, unlike SVG markers)
+        const ang = Math.atan2(ey - sy, ex - sx);
+        const L = 9, Wd = 4.2;
+        const bx = ex - L * Math.cos(ang), by = ey - L * Math.sin(ang);
+        const arrow = '<polygon fill="#ff7043" points="' +
+          ex.toFixed(1) + ',' + ey.toFixed(1) + ' ' +
+          (bx - Wd * Math.sin(ang)).toFixed(1) + ',' + (by + Wd * Math.cos(ang)).toFixed(1) + ' ' +
+          (bx + Wd * Math.sin(ang)).toFixed(1) + ',' + (by - Wd * Math.cos(ang)).toFixed(1) + '"/>';
+        return '<line class="hfc-line hfc-flow" x1="' + sx + '" y1="' + sy + '" x2="' + ex + '" y2="' + ey + '" stroke="#ff7043" stroke-width="' + w.toFixed(1) + '"/>' + arrow;
       };
 
       let out = '';
